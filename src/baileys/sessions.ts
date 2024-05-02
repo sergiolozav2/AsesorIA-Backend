@@ -25,7 +25,6 @@ export async function createSession(sessionID: string) {
   const session = makeWASocket({
     browser: Browsers.windows('Chrome'),
     auth: state,
-    logger: undefined,
   });
   session.ev.on('creds.update', saveCreds);
   session.ev.on('messages.upsert', ({ messages, type }) =>
