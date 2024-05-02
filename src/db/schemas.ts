@@ -1,3 +1,4 @@
+import { relations } from 'drizzle-orm';
 import {
   boolean,
   integer,
@@ -98,6 +99,25 @@ export const message = pgTable('message', {
     onDelete: 'cascade',
   }),
 });
+
+export const chatRelations = relations(chat, ({ many, one }) => ({
+  messages: many(message),
+  waSession: one(waSession, {
+    fields: [chat.waSessionID],
+    references: [waSession.waSessionID],
+  }),
+}));
+
+export const messagesRelations = relations(message, ({ one }) => ({
+  chat: one(chat, {
+    fields: [message.chatID],
+    references: [chat.chatID],
+  }),
+}));
+
+export const sessionRelatiosns = relations(waSession, ({ many }) => ({
+  chats: many(chat),
+}));
 
 export const userType = pgEnum('userType', ['dev', 'admin', 'user']);
 export const permissionType = pgEnum('permissionType', [
