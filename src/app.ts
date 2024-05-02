@@ -12,7 +12,11 @@ export async function buildApp() {
   }).withTypeProvider<TypeBoxTypeProvider>();
 
   app.register(fastifyCors, {
-    origin: ['http://localhost:5173', 'http://localhost:5000'],
+    origin: [
+      'http://localhost:5173',
+      'http://localhost:5000',
+      'https://asesoria-frontend.netlify.app',
+    ],
     credentials: true,
   });
 
