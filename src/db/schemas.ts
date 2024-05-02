@@ -54,13 +54,12 @@ export const chat = pgTable(
   'chat',
   {
     chatID: serial('chatID').primaryKey(),
-    jid: varchar('jid', { length: 32 }).notNull(),
-    waSessionID: varchar('waSessionID', { length: 32 })
-      .notNull()
-      .references(() => waSession.waSessionID),
+    jid: varchar('jid', { length: 64 }).notNull(),
+    waSessionID: varchar('waSessionID', { length: 100 }).notNull(),
     createdAt: timestamp('createdAt', { precision: 3, mode: 'string' })
       .defaultNow()
       .notNull(),
+    pushName: varchar('pushName', { length: 100 }).default('').notNull(),
     clientID: integer('clientID').references(() => client.clientID, {
       onDelete: 'set null',
     }),
@@ -91,6 +90,7 @@ export const message = pgTable('message', {
   messageID: serial('messageID').primaryKey(),
   waID: varchar('waID', { length: 64 }),
   content: json('content'),
+  fromMe: boolean('fromMe').notNull(),
   createdAt: timestamp('createdAt', { precision: 3, mode: 'string' })
     .defaultNow()
     .notNull(),

@@ -6,4 +6,5 @@ export const InsertMessageSchema = Type.Object({
   waID: Type.String(),
   chatID: Type.Number(),
   createdAt: Type.Optional(Type.String()),
+  fromMe: Type.Boolean(),
 });
