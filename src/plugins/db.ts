@@ -14,5 +14,6 @@ async function plugin(fastify: FastifyInstance) {
 }
 
 export default fastifyPlugin(plugin, {
+  name: 'db',
   dependencies: ['config'],
 });
