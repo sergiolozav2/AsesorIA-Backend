@@ -1,52 +1,44 @@
 import { ConnectionState, DisconnectReason } from '@whiskeysockets/baileys';
 import { toDataURL } from 'qrcode';
-import { BaileysCallbacks } from '../types';
+import { WhatsappEventEmitterType } from '../whatsappEvents';
 
 export async function connectionHandler(
   update: Partial<ConnectionState>,
-  handleClosed: (message: string) => void,
-  callbacks: BaileysCallbacks,
+  emitter: WhatsappEventEmitterType,
 ) {
   const { connection } = update;
 
-  const onError = (error: any) => callbacks.onError(error);
   if (connection === 'open') {
-    handleConnectionOpen(callbacks.onScannedQR).catch(onError);
+    emitter.emit('open', '');
   }
   if (connection === 'close') {
-    handleConnectionClosed(update, handleClosed, callbacks.onError);
+    if (shouldReconnect(update)) {
+      emitter.emit('reconnect');
+      return;
+    } else {
+      emitter.emit('error', getUpdateStatusCode(update));
+    }
   }
-
-  handleConnectionQR(update, callbacks.onLoadedQR).catch(onError);
-}
-
-export async function handleConnectionClosed(
-  update: Partial<ConnectionState>,
-  handleClosed: (message: string) => void,
-  onError: (message: string) => void,
-) {
-  const code = (update.lastDisconnect?.error as any)?.output?.statusCode;
-  const restartRequired = code === DisconnectReason.restartRequired;
-  if (restartRequired) {
-    handleClosed('reconnect');
-    return;
+  const qr = await getQR(update);
+  if (qr) {
+    emitter.emit('qr', qr);
   }
-  handleClosed('error');
-  onError(code.toString());
 }
 
-export async function handleConnectionOpen(onScannedQR: () => void) {
-  onScannedQR();
+function getUpdateStatusCode(update: Partial<ConnectionState>) {
+  return (update.lastDisconnect?.error as any)?.output?.statusCode;
 }
 
-export async function handleConnectionQR(
-  update: Partial<ConnectionState>,
-  onLoadedQR: (qr: string) => void,
-) {
-  console.log('SI HAY QR: ', update.qr);
+async function getQR(update: Partial<ConnectionState>) {
   const rawQR = update.qr;
   if (rawQR?.length) {
     const qr = await toDataURL(rawQR);
-    onLoadedQR(qr);
+    return qr;
   }
+  return;
+}
+function shouldReconnect(update: Partial<ConnectionState>) {
+  const code = getUpdateStatusCode(update);
+  const restartRequired = code === DisconnectReason.restartRequired;
+  return restartRequired;
 }

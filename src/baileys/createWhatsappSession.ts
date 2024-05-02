@@ -1,48 +1,33 @@
-import makeWASocket, {
-  Browsers,
-  useMultiFileAuthState,
-} from '@whiskeysockets/baileys';
 import { connectionHandler } from './handlers/connectionHandler';
-import { activeSessions } from './sessions';
-import { BaileysCallbacks } from './types';
+import { createSession } from './sessions';
 import { rootPath } from './utils/getSessionsFolder';
+import { WhatsappEventEmitterType } from './whatsappEvents';
 
 export async function createWhatsappSession(
   sessionID: string,
-  callbacks: BaileysCallbacks,
+  emitter: WhatsappEventEmitterType,
   reconnectRequired: boolean = false,
 ) {
-  const { state, saveCreds } = await useMultiFileAuthState(
-    `${rootPath}/${sessionID}`,
-  );
+  const trueSessionID = `${rootPath}/${sessionID}`;
+  const { state, session } = await createSession(trueSessionID);
 
   if (state.creds.account && !reconnectRequired) {
-    callbacks.onError('Ya existe una cuenta');
+    emitter.emit('error', 'Ya existe una cuenta con esa ID');
     return;
   }
 
-  const socket = makeWASocket({
-    browser: Browsers.ubuntu('Chrome'),
-    generateHighQualityLinkPreview: true,
-    auth: state,
+  // Pense que se repetían los listeners al usar 'reconnect'
+  // Pero como crea un nuevo socket, debe repetirse al nuevo socket
+  emitter.on('reconnect', () => {
+    createWhatsappSession(sessionID, emitter, true);
   });
 
-  // ESTA LINEA ES IMPORTANTE PARA ENVÍAR MENSAJES
-  activeSessions[sessionID] = socket;
+  emitter.on('error', (code) => {
+    session.end(new Error(`Conexión finalizada: ${code}`));
+    emitter.removeAllListeners();
+  });
 
-  function restartRequired() {
-    createWhatsappSession(sessionID, callbacks, true);
-  }
-
-  function handleClosed(message: string) {
-    if (message === 'reconnect') {
-      restartRequired();
-      return;
-    }
-    socket.end(new Error('Desconectado'));
-  }
-  socket.ev.on('creds.update', saveCreds);
-  socket.ev.on('connection.update', (update) => {
-    connectionHandler(update, handleClosed, callbacks);
+  session.ev.on('connection.update', (update) => {
+    connectionHandler(update, emitter);
   });
 }

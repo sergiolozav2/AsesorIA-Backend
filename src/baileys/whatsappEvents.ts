@@ -1,7 +1,7 @@
-import { EventEmitter } from 'stream';
+import EventEmitter2 from 'eventemitter2';
 
 class TypedEmitter<TEvents extends Record<string, any>> {
-  private emitter = new EventEmitter();
+  private emitter = new EventEmitter2({ wildcard: true });
 
   emit<TEventName extends keyof TEvents & string>(
     eventName: TEventName,
@@ -23,13 +23,21 @@ class TypedEmitter<TEvents extends Record<string, any>> {
   ) {
     this.emitter.off(eventName, handler as any);
   }
+
+  removeAllListeners() {
+    this.emitter.removeAllListeners();
+  }
 }
 
 type WhatsappEvents = {
-  scannedQr: [qr: string];
+  '*': [event: string];
+  qr: [qr: string];
   error: [error: string];
-  open: [];
+  reconnect: [];
+  scannedQr: [];
+  open: [open: string];
   closed: [];
 };
 
 export const WhatsappEventEmitter = () => new TypedEmitter<WhatsappEvents>();
+export type WhatsappEventEmitterType = ReturnType<typeof WhatsappEventEmitter>;

@@ -1,10 +1,9 @@
 import { MessageUpsertType, proto } from '@whiskeysockets/baileys';
-import { getMessageJid } from '../utils/getMessageJid';
-import { isTextMessage } from '../utils/isTextMessage';
-import { getMessageTimestamp } from '../utils/getMessageTimestamp';
+import { getMessageContent } from '../utils/getMessageContent';
 import { MessageRepository } from '@api/modules/message/message.repository';
 import { InsertMessageType } from '@api/modules/message/message.schema';
 import { ChannelRepository } from '@api/modules/channel/channel.repository';
+import { getMessageData } from '../utils/getMessageData';
 
 type MessagesHandlersParam = {
   messages: proto.IWebMessageInfo[];
@@ -27,31 +26,38 @@ export async function messagesHandler({
 
   sessionID = splitSessionIDPath(sessionID);
   const validMessages: InsertMessageType[] = [];
-  const jid = getMessageJid(messages);
 
-  let chat = await channelRepository.findByID(jid, sessionID);
-  if (!chat) {
-    chat = await channelRepository.createChat({
-      jid,
-      waSessionID: sessionID,
-    });
-  }
+  const placeholderChatID = -1;
   for (const message of messages) {
     if (!message.key.id) {
       continue;
     }
-    const isText = isTextMessage(message);
+    const { isText, fromMe, timestamp } = getMessageContent(message);
     if (isText) {
-      console.log(`Guardando mensaje de: ${jid}`);
-      const creadoEn = getMessageTimestamp(message);
       validMessages.push({
-        createdAt: creadoEn.getTime().toString(),
+        fromMe,
+        createdAt: timestamp.toISOString(),
         content: JSON.stringify(message.message),
         waID: message.key.id,
-        chatID: chat.chatID,
+        chatID: placeholderChatID,
       });
     }
   }
 
-  messageRepository.createMany(validMessages);
+  const { jid, pushName } = getMessageData(messages);
+  if (validMessages.length >= 1 && jid) {
+    let chat = await channelRepository.findByID(jid, sessionID);
+    if (!chat) {
+      chat = await channelRepository.createChat({
+        jid,
+        pushName,
+        waSessionID: sessionID,
+      });
+    }
+    const saveMessages = validMessages.map((message) => ({
+      ...message,
+      chatID: chat.chatID,
+    }));
+    messageRepository.createMany(saveMessages);
+  }
 }
