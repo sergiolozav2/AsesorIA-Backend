@@ -2,7 +2,7 @@ import { randomUUID } from 'crypto';
 import { WhatsappRepository } from './whatsapp.repository';
 import { UserType } from '@fastify/jwt';
 import { createWhatsappSession } from '@api/baileys/createWhatsappSession';
-import { BaileysCallbacks } from '@api/baileys/types';
+import { WhatsappEventEmitterType } from '@api/baileys/whatsappEvents';
 
 export class WhatsappService {
   constructor(whatsappRP?: WhatsappRepository) {
@@ -11,22 +11,17 @@ export class WhatsappService {
 
   private whatsappRepository: WhatsappRepository;
 
-  async createSession(user: UserType, callbacks: BaileysCallbacks) {
+  async createSession(user: UserType, emitter: WhatsappEventEmitterType) {
     const waSessionID = randomUUID();
-
-    const overrideOnScannerQR = () => {
+    emitter.on('open', () => {
       this.whatsappRepository.create({
         companyID: user.companyID,
         createdBy: user.userID,
         name: waSessionID,
         waSessionID: waSessionID,
       });
-      callbacks.onScannedQR();
-    };
-    createWhatsappSession(waSessionID, {
-      ...callbacks,
-      onScannedQR: overrideOnScannerQR,
     });
+    createWhatsappSession(waSessionID, emitter);
     return user;
   }
 }

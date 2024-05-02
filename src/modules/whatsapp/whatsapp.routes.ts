@@ -1,5 +1,6 @@
 import { FastifyTypebox } from '@api/types/FastifyTypebox';
 import { WhatsappService } from './whatsapp.service';
+import { WhatsappEventEmitter } from '@api/baileys/whatsappEvents';
 
 function formatSSE(event: string, data: unknown) {
   return JSON.stringify({ event, data });
@@ -30,20 +31,18 @@ export default function routes(
     },
     async (req, res) => {
       res.sse({ data: formatSSE('start', '') });
-      whatsappService.createSession(req.user, {
-        onLoadedQR(qr) {
-          res.sse({ data: formatSSE('qr', qr) });
-        },
-        onScannedQR() {
-          res.sse({ data: formatSSE('scanned', 'success') });
-          res.sseContext.source.end();
-        },
-        onError(message) {
-          res.sse({ data: formatSSE('error', message.toString()) });
-          res.sseContext.source.end();
-        },
+      const eventEmitter = WhatsappEventEmitter();
+      eventEmitter.on('*', function (data) {
+        const event = this?.event;
+        res.sse({ data: formatSSE(event, data) });
       });
-      req.raw.on('close', () => {});
+      eventEmitter.on('error', () => {
+        res.sseContext.source.end();
+      });
+      whatsappService.createSession(req.user, eventEmitter);
+      req.raw.on('close', () => {
+        console.log('Event closed');
+      });
     },
   );
 
