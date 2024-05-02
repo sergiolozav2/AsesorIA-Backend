@@ -20,8 +20,8 @@ export default fastifyPlugin(
     });
 
     const hours = fastify.config.JWT_DURATION_HOURS;
+    const domain = fastify.config.COOKIE_DOMAIN;
     const expires = new Date(Date.now() + hours * 60 * 60 * 1000);
-    const domain = 'localhost';
 
     const defaultCookieConfig: CookieSerializeOptions = {
       expires,

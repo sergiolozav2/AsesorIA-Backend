@@ -17,6 +17,7 @@ const envSchema = Type.Object({
   SECRET_JWT: Type.String(),
   SECRET_COOKIE: Type.String(),
   JWT_DURATION_HOURS: Type.Number(),
+  COOKIE_DOMAIN: Type.String(),
 });
 
 function plugin(fastify: FastifyInstance, _: unknown, done: () => void) {
