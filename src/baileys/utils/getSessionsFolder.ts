@@ -5,6 +5,11 @@ export const rootPath = 'wa_sessions';
 
 export async function getSessionFolders() {
   const sessionIDs = new Promise<string[]>((resolve, reject) => {
+    try {
+      fs.mkdirSync(rootPath);
+    } catch (e) {
+      console.log(e);
+    }
     fs.readdir(rootPath, (err, items) => {
       if (err) {
         reject(err);
