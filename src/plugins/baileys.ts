@@ -1,4 +1,5 @@
 import { createWhatsappSession } from '@api/baileys/createWhatsappSession';
+import { resetWhatsappSession } from '@api/baileys/resetWhatsappSession';
 import { startStoredSessions } from '@api/baileys/startStoredSessions';
 import { WhatsappEventEmitterType } from '@api/baileys/whatsappEvents';
 import { FastifyInstance } from 'fastify';
@@ -12,6 +13,7 @@ declare module 'fastify' {
         sessionID: string,
         emitter: WhatsappEventEmitterType,
       ) => Promise<void>;
+      resetWhatsappSession: (sessionID: string) => Promise<void>;
     };
   }
 }
@@ -20,6 +22,7 @@ export default fastifyPlugin(
   async (fastify: FastifyInstance) => {
     fastify.decorate('baileys', {
       createWhatsappSession: createWhatsappSession,
+      resetWhatsappSession: resetWhatsappSession,
     });
 
     await startStoredSessions();

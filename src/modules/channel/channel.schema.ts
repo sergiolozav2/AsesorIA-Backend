@@ -7,7 +7,7 @@ export const InsertChatSchema = Type.Object({
   jid: Type.String(),
 });
 
-export const RequestGetAllChatResponse = Type.Object({
+export const RequestGetAllSessionResponse = Type.Object({
   list: Type.Array(
     Type.Object({
       waSessionID: Type.String(),
@@ -16,8 +16,15 @@ export const RequestGetAllChatResponse = Type.Object({
     }),
   ),
 });
-export const RequestGetAllChatSchema = {
+export const RequestGetAllSessionSchema = {
   response: {
-    200: RequestGetAllChatResponse,
+    200: RequestGetAllSessionResponse,
   },
+};
+
+export const RequestResetSession = Type.Object({
+  waSessionID: Type.String(),
+});
+export const RequestResetSessionSchema = {
+  body: RequestResetSession,
 };
