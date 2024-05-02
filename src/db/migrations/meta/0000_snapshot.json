@@ -1,0 +1,412 @@
+{
+  "id": "22494951-dac1-44b0-809c-5ef23ca3400f",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "version": "5",
+  "dialect": "pg",
+  "tables": {
+    "chat": {
+      "name": "chat",
+      "schema": "",
+      "columns": {
+        "chatID": {
+          "name": "chatID",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "jid": {
+          "name": "jid",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "waSessionID": {
+          "name": "waSessionID",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "clientID": {
+          "name": "clientID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "companyID": {
+          "name": "companyID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "chat_waSessionID_waSession_waSessionID_fk": {
+          "name": "chat_waSessionID_waSession_waSessionID_fk",
+          "tableFrom": "chat",
+          "tableTo": "waSession",
+          "columnsFrom": [
+            "waSessionID"
+          ],
+          "columnsTo": [
+            "waSessionID"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "chat_clientID_client_clientID_fk": {
+          "name": "chat_clientID_client_clientID_fk",
+          "tableFrom": "chat",
+          "tableTo": "client",
+          "columnsFrom": [
+            "clientID"
+          ],
+          "columnsTo": [
+            "clientID"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "chat_companyID_company_companyID_fk": {
+          "name": "chat_companyID_company_companyID_fk",
+          "tableFrom": "chat",
+          "tableTo": "company",
+          "columnsFrom": [
+            "companyID"
+          ],
+          "columnsTo": [
+            "companyID"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "client": {
+      "name": "client",
+      "schema": "",
+      "columns": {
+        "clientID": {
+          "name": "clientID",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "fullName": {
+          "name": "fullName",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "companyID": {
+          "name": "companyID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "client_companyID_company_companyID_fk": {
+          "name": "client_companyID_company_companyID_fk",
+          "tableFrom": "client",
+          "tableTo": "company",
+          "columnsFrom": [
+            "companyID"
+          ],
+          "columnsTo": [
+            "companyID"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "company": {
+      "name": "company",
+      "schema": "",
+      "columns": {
+        "companyID": {
+          "name": "companyID",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(256)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "ownerID": {
+          "name": "ownerID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "company_ownerID_user_userID_fk": {
+          "name": "company_ownerID_user_userID_fk",
+          "tableFrom": "company",
+          "tableTo": "user",
+          "columnsFrom": [
+            "ownerID"
+          ],
+          "columnsTo": [
+            "userID"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "message": {
+      "name": "message",
+      "schema": "",
+      "columns": {
+        "messageID": {
+          "name": "messageID",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "waID": {
+          "name": "waID",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "content": {
+          "name": "content",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "chatID": {
+          "name": "chatID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "message_chatID_chat_chatID_fk": {
+          "name": "message_chatID_chat_chatID_fk",
+          "tableFrom": "message",
+          "tableTo": "chat",
+          "columnsFrom": [
+            "chatID"
+          ],
+          "columnsTo": [
+            "chatID"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "user": {
+      "name": "user",
+      "schema": "",
+      "columns": {
+        "userID": {
+          "name": "userID",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "fullName": {
+          "name": "fullName",
+          "type": "varchar(256)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "password": {
+          "name": "password",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "verified": {
+          "name": "verified",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "user_password_unique": {
+          "name": "user_password_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "password"
+          ]
+        },
+        "user_email_unique": {
+          "name": "user_email_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "email"
+          ]
+        }
+      }
+    },
+    "waSession": {
+      "name": "waSession",
+      "schema": "",
+      "columns": {
+        "waSessionID": {
+          "name": "waSessionID",
+          "type": "varchar(100)",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(256)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "createdBy": {
+          "name": "createdBy",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "companyID": {
+          "name": "companyID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "waSession_createdBy_user_userID_fk": {
+          "name": "waSession_createdBy_user_userID_fk",
+          "tableFrom": "waSession",
+          "tableTo": "user",
+          "columnsFrom": [
+            "createdBy"
+          ],
+          "columnsTo": [
+            "userID"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "waSession_companyID_company_companyID_fk": {
+          "name": "waSession_companyID_company_companyID_fk",
+          "tableFrom": "waSession",
+          "tableTo": "company",
+          "columnsFrom": [
+            "companyID"
+          ],
+          "columnsTo": [
+            "companyID"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    }
+  },
+  "enums": {
+    "permissionType": {
+      "name": "permissionType",
+      "values": {
+        "module_chat": "module_chat",
+        "module_company": "module_company",
+        "module_chatbot": "module_chatbot",
+        "module_marketing": "module_marketing",
+        "module_client": "module_client",
+        "module_settings": "module_settings",
+        "module_team": "module_team"
+      }
+    },
+    "userType": {
+      "name": "userType",
+      "values": {
+        "dev": "dev",
+        "admin": "admin",
+        "user": "user"
+      }
+    }
+  },
+  "schemas": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}
