@@ -12,7 +12,7 @@ export async function startStoredSessions() {
   for (let i = 0; i < promises.length; i++) {
     const promise = promises[i];
     if (promise.status === 'rejected') {
-      console.log('Fallo esta sesión');
+      console.log('Fallo esta sesión: ', sessionIDs[i]);
       continue;
     }
   }
