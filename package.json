@@ -30,6 +30,7 @@
     "bcrypt": "^5.1.1",
     "dotenv": "^16.4.5",
     "drizzle-orm": "^0.30.9",
+    "eventemitter2": "^6.4.9",
     "fastify": "^4.26.2",
     "fastify-plugin": "^4.5.1",
     "fastify-sse-v2": "^4.0.0",
