@@ -3,6 +3,6 @@
   "schema": "./src/db/schemas.ts",
   "driver": "pg",
   "dbCredentials": {
-    "connectionString": "postgresql://user:password@localhost:5432/database"
+    "connectionString": "postgres://user:password@localhost:5432/database"
   }
 }
