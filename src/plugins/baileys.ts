@@ -1,31 +1,22 @@
-import { createWhatsappSession } from '@api/baileys/createWhatsappSession';
-import { resetWhatsappSession } from '@api/baileys/resetWhatsappSession';
-import { startStoredSessions } from '@api/baileys/startStoredSessions';
-import { WhatsappEventEmitterType } from '@api/baileys/whatsappEvents';
+import { BaileysManager } from '@api/baileys/BaileysManager/baileysManager';
+import { BaileysRepository } from '@api/modules/whatsapp/baileys.repository';
 import { FastifyInstance } from 'fastify';
 
 import fastifyPlugin from 'fastify-plugin';
 
 declare module 'fastify' {
   interface FastifyInstance {
-    baileys: {
-      createWhatsappSession: (
-        sessionID: string,
-        emitter: WhatsappEventEmitterType,
-      ) => Promise<void>;
-      resetWhatsappSession: (sessionID: string) => Promise<void>;
-    };
+    baileys: BaileysManager;
   }
 }
 
 export default fastifyPlugin(
   async (fastify: FastifyInstance) => {
-    fastify.decorate('baileys', {
-      createWhatsappSession: createWhatsappSession,
-      resetWhatsappSession: resetWhatsappSession,
-    });
+    const baileysRepository = new BaileysRepository();
+    const baileys = new BaileysManager(baileysRepository);
+    fastify.decorate('baileys', baileys);
 
-    await startStoredSessions();
+    await baileys.startStoredSessions();
   },
   { name: 'baileys', dependencies: ['config', 'db'] },
 );
