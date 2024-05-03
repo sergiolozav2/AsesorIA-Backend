@@ -6,6 +6,7 @@ import {
   pgEnum,
   pgTable,
   serial,
+  text,
   timestamp,
   unique,
   varchar,
@@ -36,7 +37,11 @@ export const company = pgTable('company', {
 });
 
 export const waSession = pgTable('waSession', {
-  waSessionID: varchar('waSessionID', { length: 100 }).primaryKey(),
+  waSessionID: varchar('waSessionID', { length: 100 })
+    .primaryKey()
+    .references(() => waSessionAuthKey.waSessionID, {
+      onDelete: 'cascade',
+    }),
   name: varchar('name', { length: 256 }).notNull(),
   createdAt: timestamp('createdAt', { precision: 3, mode: 'string' })
     .defaultNow()
@@ -64,6 +69,11 @@ export const chat = pgTable(
     clientID: integer('clientID').references(() => client.clientID, {
       onDelete: 'set null',
     }),
+    companyID: integer('companyID')
+      .notNull()
+      .references(() => company.companyID, {
+        onDelete: 'cascade',
+      }),
   },
   (table) => {
     return {
@@ -95,9 +105,21 @@ export const message = pgTable('message', {
   createdAt: timestamp('createdAt', { precision: 3, mode: 'string' })
     .defaultNow()
     .notNull(),
-  chatID: integer('chatID').references(() => chat.chatID, {
-    onDelete: 'cascade',
-  }),
+  chatID: integer('chatID')
+    .notNull()
+    .references(() => chat.chatID, {
+      onDelete: 'cascade',
+    }),
+});
+
+export const waSessionAuthKey = pgTable('waSessionAuthKey', {
+  waSessionAuthKeyID: serial('waSessionAuthKeyID').primaryKey(),
+  createdAt: timestamp('createdAt', { precision: 3, mode: 'string' })
+    .defaultNow()
+    .notNull(),
+  waSessionID: varchar('waSessionID', { length: 100 }).notNull(),
+  key: varchar('key', { length: 255 }).notNull(),
+  keyJSON: text('keyJSON').notNull(),
 });
 
 export const chatRelations = relations(chat, ({ many, one }) => ({
