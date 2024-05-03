@@ -1,11 +1,4 @@
-import { Static, Type } from '@sinclair/typebox';
-
-export type InsertChatType = Static<typeof InsertChatSchema>;
-export const InsertChatSchema = Type.Object({
-  waSessionID: Type.String(),
-  pushName: Type.String(),
-  jid: Type.String(),
-});
+import { Type } from '@sinclair/typebox';
 
 export const RequestGetAllSessionResponse = Type.Object({
   list: Type.Array(
