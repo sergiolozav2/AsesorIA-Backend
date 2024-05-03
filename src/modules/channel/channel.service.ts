@@ -8,7 +8,7 @@ export class ChannelService {
   private chatRepository: ChannelRepository;
 
   async getAllSessions(companyID: number) {
-    const chats = await this.chatRepository.getAllSessions(companyID);
+    const chats = await this.chatRepository.getCompanySessions(companyID);
     return chats;
   }
 }

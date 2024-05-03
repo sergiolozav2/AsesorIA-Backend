@@ -13,7 +13,7 @@ export class WhatsappRepository extends SharedRepository {
     return whatsapp;
   }
 
-  async create(data: InsertWhatsappSessionType) {
+  async createChat(data: InsertWhatsappSessionType) {
     const [chat] = await this.db
       .insert(schema.waSession)
       .values(data)
