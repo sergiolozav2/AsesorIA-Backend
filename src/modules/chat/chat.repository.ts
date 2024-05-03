@@ -4,34 +4,24 @@ import { eq } from 'drizzle-orm';
 
 export class ChatRepository extends SharedRepository {
   async findByCompanyID(companyID: number) {
-    const sessionsAndChats = await this.db.query.waSession.findMany({
+    const chats = await this.db.query.chat.findMany({
       columns: {
+        chatID: true,
+        jid: true,
+        pushName: true,
         createdAt: true,
-        name: true,
-        waSessionID: true,
       },
-      where: eq(schema.waSession.companyID, companyID),
       with: {
-        chats: {
+        messages: {
           columns: {
-            chatID: true,
-            jid: true,
-            pushName: true,
+            fromMe: true,
+            content: true,
             createdAt: true,
-          },
-          with: {
-            messages: {
-              columns: {
-                fromMe: true,
-                content: true,
-                createdAt: true,
-              },
-            },
           },
         },
       },
+      where: eq(schema.chat.companyID, companyID),
     });
-    const [onlyChats] = sessionsAndChats.map((chat) => chat.chats);
-    return onlyChats;
+    return chats;
   }
 }
