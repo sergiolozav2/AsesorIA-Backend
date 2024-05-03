@@ -1,9 +1,6 @@
 import { FastifyTypebox } from '@api/types/FastifyTypebox';
 import { ChannelService } from './channel.service';
-import {
-  RequestGetAllSessionSchema,
-  RequestResetSessionSchema,
-} from './channel.schema';
+import { RequestGetAllSessionSchema } from './channel.schema';
 
 export default function routes(
   fastify: FastifyTypebox,
@@ -21,15 +18,5 @@ export default function routes(
       return { list: chats };
     },
   );
-
-  fastify.post(
-    '/reset-session',
-    { schema: RequestResetSessionSchema },
-    async (req) => {
-      await fastify.baileys.resetWhatsappSession(req.body.waSessionID);
-      return { message: 'ok' };
-    },
-  );
-
   done();
 }
