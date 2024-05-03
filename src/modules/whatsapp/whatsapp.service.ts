@@ -1,8 +1,8 @@
 import { randomUUID } from 'crypto';
 import { WhatsappRepository } from './whatsapp.repository';
 import { UserType } from '@fastify/jwt';
-import { createWhatsappSession } from '@api/baileys/createWhatsappSession';
 import { WhatsappEventEmitterType } from '@api/baileys/whatsappEvents';
+import { BaileysManager } from '@api/baileys/BaileysManager/baileysManager';
 
 export class WhatsappService {
   constructor(whatsappRP?: WhatsappRepository) {
@@ -11,17 +11,21 @@ export class WhatsappService {
 
   private whatsappRepository: WhatsappRepository;
 
-  async createSession(user: UserType, emitter: WhatsappEventEmitterType) {
+  async createSession(
+    user: UserType,
+    emitter: WhatsappEventEmitterType,
+    bailey: BaileysManager,
+  ) {
     const waSessionID = randomUUID();
     emitter.on('open', () => {
-      this.whatsappRepository.create({
+      this.whatsappRepository.createChat({
         companyID: user.companyID,
         createdBy: user.userID,
         name: waSessionID,
         waSessionID: waSessionID,
       });
     });
-    createWhatsappSession(waSessionID, emitter);
+    bailey.createWhatsappSession(waSessionID, user.companyID, emitter);
     return user;
   }
 }

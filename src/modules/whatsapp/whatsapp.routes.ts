@@ -39,7 +39,7 @@ export default function routes(
       eventEmitter.on('error', () => {
         res.sseContext.source.end();
       });
-      whatsappService.createSession(req.user, eventEmitter);
+      whatsappService.createSession(req.user, eventEmitter, fastify.baileys);
       req.raw.on('close', () => {
         console.log('Event closed');
       });
