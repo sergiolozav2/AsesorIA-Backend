@@ -1,13 +1,10 @@
 import { GetAllSessionsType, SesionWA, UseAuthStateType } from '../types';
 import { WhatsappEventEmitterType } from '../whatsappEvents';
-import { connectionHandler } from '../handlers/connectionHandler';
+import { baseConnectionHandler } from './baseConnectionHandler';
 import makeWASocket, { Browsers } from '@whiskeysockets/baileys';
 import { BaileysRepository } from '@api/modules/whatsapp/baileys.repository';
-import {
-  MessageHandlerType,
-  baseMessageHandler,
-} from '../handlers/baseMessageHandler';
-import { baseAuthStore } from '../store/baseAuthStore';
+import { MessageHandlerType, baseMessageHandler } from './baseMessageHandler';
+import { baseAuthStore } from './baseAuthStore';
 
 export class BaileysManager {
   constructor(baileysRepository: BaileysRepository) {
@@ -59,7 +56,7 @@ export class BaileysManager {
     });
 
     session.ev.on('connection.update', (update) => {
-      connectionHandler(update, emitter);
+      baseConnectionHandler(update, emitter);
     });
   }
 

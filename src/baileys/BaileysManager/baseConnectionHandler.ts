@@ -2,7 +2,7 @@ import { ConnectionState, DisconnectReason } from '@whiskeysockets/baileys';
 import { toDataURL } from 'qrcode';
 import { WhatsappEventEmitterType } from '../whatsappEvents';
 
-export async function connectionHandler(
+export async function baseConnectionHandler(
   update: Partial<ConnectionState>,
   emitter: WhatsappEventEmitterType,
 ) {
