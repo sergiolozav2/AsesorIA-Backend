@@ -10,4 +10,14 @@ export class ChannelRepository extends SharedRepository {
       .where(eq(schema.waSession.companyID, companyID));
     return waSessions;
   }
+
+  async deleteSession(waSessionID: string) {
+    const [deleted] = await this.db
+      .delete(schema.waSession)
+      .where(eq(schema.waSession.waSessionID, waSessionID))
+      .returning({
+        waSessionID: schema.waSession.waSessionID,
+      });
+    return deleted;
+  }
 }

@@ -8,6 +8,12 @@ import { baseAuthStore } from './baseAuthStore';
 
 export class BaileysManager {
   constructor(baileysRepository: BaileysRepository) {
+    // Tengo que usar callbacks porque si uso el método directamente
+    // el enlace a 'this' cambia dentro de 'useAuthState' y el repositorio
+    // no puede encontrar a 'this.db'
+
+    // Si no se entendió es porque Javascript es raro
+
     this.useAuthState = baseAuthStore({
       deleteKey: (args) => baileysRepository.deleteAuthKey(args),
       getKey: (args) => baileysRepository.findAuthKey(args),
@@ -80,6 +86,16 @@ export class BaileysManager {
       }
     }
     console.log('Cuentas de Whatsapp inicializadas');
+  }
+
+  async deleteSession(sessionID: string) {
+    const session = this.activeSessions[sessionID];
+    if (!session) {
+      return;
+    }
+    session.end(new Error('Sesión eliminada'));
+    this.activeSessions[sessionID] = null;
+    delete this.activeSessions[sessionID];
   }
 
   async getSession(sessionID: string, companyID: number) {

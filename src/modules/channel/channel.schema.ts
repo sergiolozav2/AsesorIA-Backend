@@ -15,9 +15,15 @@ export const RequestGetAllSessionSchema = {
   },
 };
 
-export const RequestResetSession = Type.Object({
+export const RequestDeleteSessionBody = Type.Object({
   waSessionID: Type.String(),
 });
-export const RequestResetSessionSchema = {
-  body: RequestResetSession,
+export const RequestDeleteSessionResponse = Type.Object({
+  waSessionID: Type.String(),
+});
+export const RequestDeleteSessionSchema = {
+  body: RequestDeleteSessionBody,
+  response: {
+    200: RequestDeleteSessionResponse,
+  },
 };
