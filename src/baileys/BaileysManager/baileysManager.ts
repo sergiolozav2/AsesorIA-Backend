@@ -63,6 +63,7 @@ export class BaileysManager {
   async startStoredSessions() {
     console.log('Iniciando sesiones');
     const sessionIDs = await this.getAllSessions();
+    console.log(`Iniciar: ${sessionIDs.length} sesiones encontradas`);
     const sessionPromises: any = [];
     for (const sessionID of sessionIDs) {
       const { companyID, waSessionID } = sessionID;
