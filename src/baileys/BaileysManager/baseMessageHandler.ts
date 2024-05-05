@@ -35,7 +35,8 @@ export function baseMessageHandler(functions: MessageHandlerFunctions) {
         continue;
       }
       const { isText, fromMe, timestamp } = getMessageContent(message);
-      if (isText) {
+      const fromGroup = isMessageFromGroup(message);
+      if (isText && !fromGroup) {
         validMessages.push({
           fromMe,
           createdAt: timestamp.toISOString(),
