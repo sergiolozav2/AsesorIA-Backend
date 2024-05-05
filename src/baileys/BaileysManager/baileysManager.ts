@@ -1,4 +1,4 @@
-import { GetAllSessionsType, SesionWA, UseAuthStateType } from '../types';
+import { GetAllSessionsType, WaSessionType, UseAuthStateType } from '../types';
 import { WhatsappEventEmitterType } from '../whatsappEvents';
 import { baseConnectionHandler } from './baseConnectionHandler';
 import makeWASocket, { Browsers } from '@whiskeysockets/baileys';
@@ -36,7 +36,7 @@ export class BaileysManager {
   messageHandler: MessageHandlerType;
   getAllSessions: GetAllSessionsType;
   activeSessions: {
-    [key: string]: SesionWA | undefined;
+    [key: string]: WaSessionType | undefined;
   };
 
   async createWhatsappSession(
@@ -122,6 +122,7 @@ export class BaileysManager {
         type,
         sessionID,
         companyID,
+        session,
       }),
     );
     this.activeSessions[sessionID] = session;

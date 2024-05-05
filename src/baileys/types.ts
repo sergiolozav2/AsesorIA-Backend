@@ -1,6 +1,6 @@
 import makeWASocket, { useMultiFileAuthState } from '@whiskeysockets/baileys';
 
-export type SesionWA = ReturnType<typeof makeWASocket>;
+export type WaSessionType = ReturnType<typeof makeWASocket>;
 
 interface FindAuthKey {
   waSessionID: string;
