@@ -1,5 +1,5 @@
 import { BaileysManager } from '@api/baileys/BaileysManager/baileysManager';
-import { BaileysRepository } from '@api/modules/whatsapp/baileys.repository';
+import { BaileysService } from '@api/modules/whatsapp/baileys.service';
 import { FastifyInstance } from 'fastify';
 
 import fastifyPlugin from 'fastify-plugin';
@@ -12,11 +12,11 @@ declare module 'fastify' {
 
 export default fastifyPlugin(
   async (fastify: FastifyInstance) => {
-    const baileysRepository = new BaileysRepository();
-    const baileys = new BaileysManager(baileysRepository);
+    const baileysService = new BaileysService();
+    const baileys = new BaileysManager(baileysService);
     fastify.decorate('baileys', baileys);
 
     await baileys.startStoredSessions();
   },
-  { name: 'baileys', dependencies: ['config', 'db'] },
+  { name: 'baileys', dependencies: ['config', 'db', 's3'] },
 );

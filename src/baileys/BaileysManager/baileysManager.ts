@@ -1,13 +1,13 @@
-import { GetAllSessionsType, WaSessionType, UseAuthStateType } from '../types';
+import { GetAllSessionsType, WaSessionType } from '../types';
 import { WhatsappEventEmitterType } from '../whatsappEvents';
 import { baseConnectionHandler } from './baseConnectionHandler';
 import makeWASocket, { Browsers } from '@whiskeysockets/baileys';
-import { BaileysRepository } from '@api/modules/whatsapp/baileys.repository';
-import { MessageHandlerType, baseMessageHandler } from './baseMessageHandler';
 import { baseAuthStore } from './baseAuthStore';
+import { UseAuthStateType } from './types';
+import { BaileysService } from '@api/modules/whatsapp/baileys.service';
 
 export class BaileysManager {
-  constructor(baileysRepository: BaileysRepository) {
+  constructor(baileysService: BaileysService) {
     // Tengo que usar callbacks porque si uso el método directamente
     // el enlace a 'this' cambia dentro de 'useAuthState' y el repositorio
     // no puede encontrar a 'this.db'
@@ -15,45 +15,42 @@ export class BaileysManager {
     // Si no se entendió es porque Javascript es raro
 
     this.useAuthState = baseAuthStore({
-      deleteKey: (args) => baileysRepository.deleteAuthKey(args),
-      getKey: (args) => baileysRepository.findAuthKey(args),
-      saveKey: (args) => baileysRepository.insertOrUpdateAuthKeys(args),
+      deleteAuthKey: async (args) => baileysService.deleteAuthKey(args),
+      findAuthKey: async (args) => baileysService.findAuthKey(args),
+      insertOrUpdateAuthKey: async (args) =>
+        baileysService.insertOrUpdateAuthKey(args),
     });
 
-    this.messageHandler = baseMessageHandler({
-      findChatByID: (...args) => baileysRepository.findChatByID(...args),
-      createChat: (...args) => baileysRepository.createChat(...args),
-      createManyMessages: (...args) =>
-        baileysRepository.createManyMessages(...args),
-    });
-
-    this.getAllSessions = (...args) =>
-      baileysRepository.getAllSessions(...args);
+    this.getAllSessions = (...args) => baileysService.getAllSessions(...args);
     this.activeSessions = {};
+
+    this.baileysService = baileysService;
   }
 
   useAuthState: UseAuthStateType;
-  messageHandler: MessageHandlerType;
+  baileysService: BaileysService;
   getAllSessions: GetAllSessionsType;
   activeSessions: {
     [key: string]: WaSessionType | undefined;
   };
+  private MAX_RECONNECT_ATTEMPTS = 2;
 
   async createWhatsappSession(
     sessionID: string,
     companyID: number,
     emitter: WhatsappEventEmitterType,
-    reconnectRequired = false,
+    reconnectAttempts = 0,
   ) {
-    const { state, session } = await this.createSocket(sessionID, companyID);
-
-    if (state.creds.account && !reconnectRequired) {
-      emitter.emit('error', 'Ya existe una cuenta con esa ID');
-      return;
-    }
-
+    const { session } = await this.createSocket(sessionID, companyID);
     emitter.on('reconnect', () => {
-      this.createWhatsappSession(sessionID, companyID, emitter, true);
+      this.deleteSession(sessionID);
+      console.log('Restarting connection, attempt: ', reconnectAttempts + 1);
+      this.createWhatsappSession(
+        sessionID,
+        companyID,
+        emitter,
+        reconnectAttempts + 1,
+      );
     });
 
     emitter.on('error', (code) => {
@@ -67,9 +64,9 @@ export class BaileysManager {
   }
 
   async startStoredSessions() {
-    console.log('Iniciando sesiones');
+    console.log('Starting whatsapp sessions...');
     const sessionIDs = await this.getAllSessions();
-    console.log(`Iniciar: ${sessionIDs.length} sesiones encontradas`);
+    console.log(`Starting: ${sessionIDs.length} sessions found`);
     const sessionPromises: any = [];
     for (const sessionID of sessionIDs) {
       const { companyID, waSessionID } = sessionID;
@@ -81,11 +78,11 @@ export class BaileysManager {
     for (let i = 0; i < promises.length; i++) {
       const promise = promises[i];
       if (promise.status === 'rejected') {
-        console.log('Fallo esta sesión: ', sessionIDs[i]);
+        console.log('Session failed: ', sessionIDs[i]);
         continue;
       }
     }
-    console.log('Cuentas de Whatsapp inicializadas');
+    console.log('Whatsapp sessions setup completed');
   }
 
   async deleteSession(sessionID: string) {
@@ -93,7 +90,7 @@ export class BaileysManager {
     if (!session) {
       return;
     }
-    session.end(new Error('Sesión eliminada'));
+    session.end(new Error('Session deleted'));
     this.activeSessions[sessionID] = null;
     delete this.activeSessions[sessionID];
   }
@@ -109,23 +106,23 @@ export class BaileysManager {
     return { session, timeout };
   }
 
-  private async createSocket(sessionID: string, companyID: number) {
-    const { state, saveCreds } = await this.useAuthState(sessionID);
+  private async createSocket(waSessionID: string, companyID: number) {
+    const { state, saveCreds } = await this.useAuthState(waSessionID);
     const session = makeWASocket({
-      browser: Browsers.windows('Chrome'),
       auth: state,
+      browser: Browsers.windows('Chrome'),
     });
     session.ev.on('creds.update', saveCreds);
-    session.ev.on('messages.upsert', ({ messages, type }) =>
-      this.messageHandler({
+    session.ev.on('messages.upsert', ({ messages, type }) => {
+      this.baileysService.handleWhatsappMessages({
         messages,
-        type,
-        sessionID,
         companyID,
-        session,
-      }),
-    );
-    this.activeSessions[sessionID] = session;
+        type,
+        waSessionID,
+        getProfilePicture: session.profilePictureUrl,
+      });
+    });
+    this.activeSessions[waSessionID] = session;
     return { session, state };
   }
 }
