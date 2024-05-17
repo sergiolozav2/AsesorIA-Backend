@@ -4,9 +4,9 @@ import { and, eq } from 'drizzle-orm';
 import {
   FindAuthKeyType,
   InsertAuthKeyType,
-  InsertChatType,
+  InsertChatAndClient,
   InsertMessageType,
-  SelectChatType,
+  SelectChatAndClientType,
 } from './baileys.schema';
 
 // Operaciones con DB para Baileys
@@ -20,6 +20,7 @@ export class BaileysRepository extends SharedRepository {
           eq(schema.waSessionAuthKey.key, data.key),
         ),
       );
+    return true;
   }
 
   async getAllSessions() {
@@ -34,7 +35,7 @@ export class BaileysRepository extends SharedRepository {
 
   async findAuthKey(data: FindAuthKeyType) {
     const sessionAuthKey = await this.db.query.waSessionAuthKey.findFirst({
-      columns: { keyJSON: true },
+      columns: { keyJSON: true, waSessionAuthKeyID: true },
       where: and(
         eq(schema.waSessionAuthKey.waSessionID, data.waSessionID),
         eq(schema.waSessionAuthKey.key, data.key),
@@ -43,64 +44,78 @@ export class BaileysRepository extends SharedRepository {
     if (!sessionAuthKey) {
       return null;
     }
-    return sessionAuthKey.keyJSON;
+    return sessionAuthKey;
   }
 
-  // Se que deberían ser operaciones sencillas
-  // Pero esta función no se relaciona a la lógica del negocio
-  // Solo la uso para actualizar las llaves de Whatsapp
-  async insertOrUpdateAuthKeys(data: InsertAuthKeyType) {
-    const { key, waSessionID, keyJSON } = data;
-    const waSessionAuthKey = await this.db.query.waSessionAuthKey.findFirst({
-      columns: { waSessionAuthKeyID: true },
-      where: and(
-        eq(schema.waSessionAuthKey.waSessionID, waSessionID),
-        eq(schema.waSessionAuthKey.key, key),
-      ),
-    });
-    // Si existe la llave actualizar el valor
-    if (waSessionAuthKey) {
-      await this.db
-        .update(schema.waSessionAuthKey)
-        .set({
-          keyJSON: keyJSON,
-        })
-        .where(
-          eq(
-            schema.waSessionAuthKey.waSessionAuthKeyID,
-            waSessionAuthKey.waSessionAuthKeyID,
-          ),
-        );
-      return;
-    }
-
-    // Sino, crearla
-    await this.db.insert(schema.waSessionAuthKey).values({
-      key,
-      waSessionID,
-      keyJSON,
-    });
+  async insertAuthKey(data: InsertAuthKeyType) {
+    await this.db
+      .insert(schema.waSessionAuthKey)
+      .values({
+        key: data.key,
+        waSessionID: data.waSessionID,
+        keyJSON: data.keyJSON,
+      })
+      .onConflictDoUpdate({
+        set: {
+          keyJSON: data.keyJSON,
+        },
+        target: [
+          schema.waSessionAuthKey.waSessionID,
+          schema.waSessionAuthKey.key,
+        ],
+      });
+    return true;
   }
 
-  async createChat(data: InsertChatType) {
-    const [channel] = await this.db
-      .insert(schema.chat)
-      .values(data)
+  async updateAuthKey(waSessionAuthKeyID: number, keyJSON: string) {
+    console.log('UPDATE KEY: ', waSessionAuthKeyID, keyJSON);
+    const update = await this.db
+      .update(schema.waSessionAuthKey)
+      .set({
+        keyJSON: keyJSON,
+      })
+      .where(eq(schema.waSessionAuthKey.waSessionAuthKeyID, waSessionAuthKeyID))
       .returning();
-    return channel;
+    console.log('RESULT: ', update[0]?.key);
+    console.log(update[0]?.keyJSON);
+    return true;
   }
 
-  async findChatByID(
+  async createChatAndClient(
+    data: InsertChatAndClient,
+  ): Promise<SelectChatAndClientType> {
+    const { chat, client } = data;
+
+    const result = await this.db.transaction(async (tx) => {
+      const [newClient] = await tx
+        .insert(schema.client)
+        .values(client)
+        .returning();
+
+      const [newChat] = await this.db
+        .insert(schema.chat)
+        .values({ ...chat, clientID: newClient.clientID })
+        .returning();
+      return { newClient, newChat };
+    });
+    return { client: result.newClient, chat: result.newChat };
+  }
+
+  async findChatAndClient(
     jid: string,
     waSessionID: string,
-  ): Promise<SelectChatType> {
-    const [chat] = await this.db
+  ): Promise<SelectChatAndClientType> {
+    const [result] = await this.db
       .select()
       .from(schema.chat)
       .where(
         and(eq(schema.chat.jid, jid), eq(schema.chat.waSessionID, waSessionID)),
+      )
+      .leftJoin(
+        schema.client,
+        eq(schema.chat.clientID, schema.client.clientID),
       );
-    return chat;
+    return result;
   }
 
   async createManyMessages(messages: InsertMessageType[]) {
