@@ -37,11 +37,7 @@ export const company = pgTable('company', {
 });
 
 export const waSession = pgTable('waSession', {
-  waSessionID: varchar('waSessionID', { length: 100 })
-    .primaryKey()
-    .references(() => waSessionAuthKey.waSessionID, {
-      onDelete: 'cascade',
-    }),
+  waSessionID: varchar('waSessionID', { length: 100 }).primaryKey(),
   name: varchar('name', { length: 256 }).notNull(),
   createdAt: timestamp('createdAt', { precision: 3, mode: 'string' })
     .defaultNow()
@@ -65,10 +61,9 @@ export const chat = pgTable(
     createdAt: timestamp('createdAt', { precision: 3, mode: 'string' })
       .defaultNow()
       .notNull(),
-    pushName: varchar('pushName', { length: 100 }).default('').notNull(),
-    clientID: integer('clientID').references(() => client.clientID, {
-      onDelete: 'set null',
-    }),
+    clientID: integer('clientID')
+      .notNull()
+      .references(() => client.clientID),
     companyID: integer('companyID')
       .notNull()
       .references(() => company.companyID, {
@@ -81,12 +76,13 @@ export const chat = pgTable(
     };
   },
 );
-
 export const client = pgTable('client', {
   clientID: serial('clientID').primaryKey(),
-  firstName: varchar('fullName', { length: 128 }).notNull(),
-  lastName: varchar('fullName', { length: 128 }).notNull(),
-  email: varchar('email', { length: 64 }).notNull(),
+  firstName: varchar('firstName', { length: 128 }).notNull(),
+  lastName: varchar('lastName', { length: 128 }),
+  email: varchar('email', { length: 64 }),
+  phone: varchar('phone', { length: 64 }),
+  profilePicture: varchar('profilePicture', { length: 512 }),
   createdAt: timestamp('createdAt', { precision: 3, mode: 'string' })
     .defaultNow()
     .notNull(),
@@ -112,18 +108,30 @@ export const message = pgTable('message', {
     }),
 });
 
-export const waSessionAuthKey = pgTable('waSessionAuthKey', {
-  waSessionAuthKeyID: serial('waSessionAuthKeyID').primaryKey(),
-  createdAt: timestamp('createdAt', { precision: 3, mode: 'string' })
-    .defaultNow()
-    .notNull(),
-  waSessionID: varchar('waSessionID', { length: 100 }).notNull(),
-  key: varchar('key', { length: 255 }).notNull(),
-  keyJSON: text('keyJSON').notNull(),
-});
+export const waSessionAuthKey = pgTable(
+  'waSessionAuthKey',
+  {
+    waSessionAuthKeyID: serial('waSessionAuthKeyID').primaryKey(),
+    createdAt: timestamp('createdAt', { precision: 3, mode: 'string' })
+      .defaultNow()
+      .notNull(),
+    waSessionID: varchar('waSessionID', { length: 100 }).notNull(),
+    key: varchar('key', { length: 255 }).notNull(),
+    keyJSON: text('keyJSON').notNull(),
+  },
+  (t) => {
+    return {
+      keySessionUnique: unique().on(t.waSessionID, t.key),
+    };
+  },
+);
 
 export const chatRelations = relations(chat, ({ many, one }) => ({
   messages: many(message),
+  client: one(client, {
+    fields: [chat.clientID],
+    references: [client.clientID],
+  }),
   waSession: one(waSession, {
     fields: [chat.waSessionID],
     references: [waSession.waSessionID],
