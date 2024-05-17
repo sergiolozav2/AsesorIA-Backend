@@ -3,39 +3,38 @@ import {
   initAuthCreds,
   BufferJSON,
 } from '@whiskeysockets/baileys';
-import { AuthStoreFunctions, UseAuthStateType } from '../types';
+import { AuthStoreFunctions, UseAuthStateReturnType } from './types';
 
 export function baseAuthStore(functions: AuthStoreFunctions) {
-  async function saveAuthKey(waSessionID: string, key: string, data: string) {
-    const keyJSON = JSON.stringify(data, BufferJSON.replacer);
-    await functions.saveKey({
-      key,
-      waSessionID,
-      keyJSON,
-    });
-  }
-  async function getAuthKey(waSessionID: string, key: string) {
-    try {
-      const rawData = await functions.getKey({ key, waSessionID });
-      const parsedData = JSON.parse(rawData, BufferJSON.reviver);
-      return parsedData;
-    } catch (error) {
-      console.log(`ReadData failed: ${error}`);
+  async function useAuthStore(waSessionID: string): UseAuthStateReturnType {
+    async function writeData(key: string, data: string) {
+      const keyJSON = JSON.stringify(data, BufferJSON.replacer);
+      return await functions.insertOrUpdateAuthKey({
+        key,
+        waSessionID,
+        keyJSON,
+      });
     }
-  }
-  async function deleteAuthKey(waSessionID: string, key: string) {
-    try {
-      await functions.deleteKey({ key, waSessionID });
-    } catch (error) {
-      console.log(`Delete failed: ${error}`);
+    async function readData(key: string) {
+      try {
+        const rawData = await functions.findAuthKey({ key, waSessionID });
+        const parsedData = JSON.parse(rawData, BufferJSON.reviver);
+        return parsedData;
+      } catch (error) {
+        console.log(`ReadData failed: ${error}`);
+      }
     }
-  }
+    async function deleteAuthKey(key: string) {
+      try {
+        return await functions.deleteAuthKey({ key, waSessionID });
+      } catch (error) {
+        console.log(`Delete failed: ${error}`);
+      }
+    }
 
-  async function useAuthStore(sessionID: string): ReturnType<UseAuthStateType> {
-    let credentials = await getAuthKey(sessionID, 'creds');
+    let credentials = await readData('creds');
     if (!credentials) {
       credentials = initAuthCreds();
-      await saveAuthKey(sessionID, 'creds', credentials);
     }
     return {
       state: {
@@ -45,7 +44,7 @@ export function baseAuthStore(functions: AuthStoreFunctions) {
             const data = {};
             await Promise.all(
               ids.map(async (id: string) => {
-                let value = await getAuthKey(sessionID, `${type}-${id}`);
+                let value = await readData(`${type}-${id}`);
                 if (type === 'app-state-sync-key' && value) {
                   value = proto.Message.AppStateSyncKeyData.fromObject(value);
                 }
@@ -56,16 +55,12 @@ export function baseAuthStore(functions: AuthStoreFunctions) {
           },
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           set: async (data: any) => {
-            const tasks: Promise<void>[] = [];
+            const tasks: Promise<boolean>[] = [];
             for (const category in data) {
               for (const id in data[category]) {
                 const value = data[category][id];
                 const key = `${category}-${id}`;
-                tasks.push(
-                  value
-                    ? saveAuthKey(sessionID, key, value)
-                    : deleteAuthKey(sessionID, key),
-                );
+                tasks.push(value ? writeData(key, value) : deleteAuthKey(key));
               }
             }
             await Promise.all(tasks);
@@ -73,7 +68,7 @@ export function baseAuthStore(functions: AuthStoreFunctions) {
         },
       },
       saveCreds: async () => {
-        await saveAuthKey(sessionID, 'creds', credentials);
+        await writeData('creds', credentials);
       },
     };
   }
