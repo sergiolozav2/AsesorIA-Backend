@@ -18,6 +18,10 @@ const envSchema = Type.Object({
   SECRET_COOKIE: Type.String(),
   JWT_DURATION_HOURS: Type.Number(),
   COOKIE_DOMAIN: Type.String(),
+  S3_REGION: Type.String(),
+  S3_ACCESS_KEY: Type.String(),
+  S3_SECRET_ID: Type.String(),
+  S3_ENDPOINT: Type.String(),
 });
 
 function plugin(fastify: FastifyInstance, _: unknown, done: () => void) {

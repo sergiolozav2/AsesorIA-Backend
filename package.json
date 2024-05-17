@@ -7,6 +7,7 @@
     "start": "node ./dist/index.js",
     "build": "tsc -p tsconfig.json && tsc-alias -p tsconfig.json",
     "dev": "tsx watch --clear-screen=false ./src/index.ts",
+    "dev:all": "docker compose up & npm run dev",
     "migrate": "drizzle-kit generate:pg",
     "push": "drizzle-kit push:pg",
     "test:unit": "vitest --reporter=basic --disable-console-intercept"
@@ -15,6 +16,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.569.0",
     "@fastify/autoload": "^5.8.0",
     "@fastify/cookie": "^9.3.1",
     "@fastify/cors": "^9.0.1",
@@ -26,7 +28,7 @@
     "@hapi/boom": "^10.0.1",
     "@sinclair/typebox": "^0.32.25",
     "@types/supertest": "^6.0.2",
-    "@whiskeysockets/baileys": "^6.6.0",
+    "@whiskeysockets/baileys": "^6.7.2",
     "bcrypt": "^5.1.1",
     "dotenv": "^16.4.5",
     "drizzle-orm": "^0.30.9",
