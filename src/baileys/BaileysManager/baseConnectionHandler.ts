@@ -39,6 +39,10 @@ async function getQR(update: Partial<ConnectionState>) {
 }
 function shouldReconnect(update: Partial<ConnectionState>) {
   const code = getUpdateStatusCode(update);
-  const restartRequired = code === DisconnectReason.restartRequired;
-  return restartRequired;
+
+  if (code === DisconnectReason.restartRequired) {
+    return true;
+  }
+
+  return false;
 }
