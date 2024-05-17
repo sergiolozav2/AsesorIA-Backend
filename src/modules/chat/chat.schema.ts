@@ -9,7 +9,12 @@ export const MessageChatSchema = Type.Object({
 export const SelectChatSchema = Type.Object({
   chatID: Type.Number(),
   jid: Type.String(),
-  pushName: Type.String(),
+  client: Type.Object({
+    clientID: Type.Number(),
+    firstName: Type.String(),
+    phone: Type.String(),
+    profilePicture: Type.String(),
+  }),
   messages: Type.Array(MessageChatSchema),
 });
 export type SelectChatType = Static<typeof SelectChatSchema>;

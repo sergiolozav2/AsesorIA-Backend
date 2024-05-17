@@ -10,7 +10,7 @@ export default function routes(
   fastify.addHook('preHandler', fastify.authenticate);
   const chatService = new ChatService();
 
-  fastify.post(
+  fastify.get(
     '/all',
     {
       schema: AllChatSchema,

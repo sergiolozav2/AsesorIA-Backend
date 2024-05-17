@@ -8,10 +8,17 @@ export class ChatRepository extends SharedRepository {
       columns: {
         chatID: true,
         jid: true,
-        pushName: true,
         createdAt: true,
       },
       with: {
+        client: {
+          columns: {
+            clientID: true,
+            firstName: true,
+            phone: true,
+            profilePicture: true,
+          },
+        },
         messages: {
           columns: {
             fromMe: true,
